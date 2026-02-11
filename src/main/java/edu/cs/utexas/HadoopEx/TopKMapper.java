@@ -1,5 +1,6 @@
 package edu.cs.utexas.HadoopEx;
 
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -10,8 +11,8 @@ import java.util.PriorityQueue;
 
 import org.apache.log4j.Logger;
 
-
-public class TopKMapper extends Mapper<Text, Text, Text, IntWritable> {
+// for task 2, changed parameter from IntWritable to DoubleWriteable
+public class TopKMapper extends Mapper<Text, Text, Text, DoubleWritable> {
 
 	private Logger logger = Logger.getLogger(TopKMapper.class);
 
@@ -32,12 +33,12 @@ public class TopKMapper extends Mapper<Text, Text, Text, IntWritable> {
 	public void map(Text key, Text value, Context context)
 			throws IOException, InterruptedException {
 
+		// added for task 2 to sort priority queue by ratio
+		double ratio = Double.parseDouble(value.toString());
+		pq.add(new WordAndCount(new Text(key), new DoubleWritable(ratio)));
 
-		int count = Integer.parseInt(value.toString());
-
-		pq.add(new WordAndCount(new Text(key), new IntWritable(count)) );
-
-		if (pq.size() > 10) {
+		// change for task 1
+		if (pq.size() > 3) {
 			pq.poll();
 		}
 	}

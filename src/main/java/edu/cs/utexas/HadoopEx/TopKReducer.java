@@ -1,5 +1,6 @@
 package edu.cs.utexas.HadoopEx;
 
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -14,8 +15,8 @@ import java.util.PriorityQueue;
 import java.util.Iterator;
 
 
-
-public class TopKReducer extends  Reducer<Text, IntWritable, Text, IntWritable> {
+// changed for task 2
+public class TopKReducer extends  Reducer<Text, DoubleWritable, Text, DoubleWritable> {
 
     private PriorityQueue<WordAndCount> pq = new PriorityQueue<WordAndCount>(10);;
 
@@ -37,34 +38,27 @@ public class TopKReducer extends  Reducer<Text, IntWritable, Text, IntWritable> 
      * @throws IOException
      * @throws InterruptedException
      */
-   public void reduce(Text key, Iterable<IntWritable> values, Context context)
+    // parameter changed to DoubleWriteable for task 2
+   public void reduce(Text key, Iterable<DoubleWritable> values, Context context)
            throws IOException, InterruptedException {
 
-
-       // A local counter just to illustrate the number of values here!
+       // used to visualize the number of values at this point
         int counter = 0 ;
 
-
-       // size of values is 1 because key only has one distinct value
-       for (IntWritable value : values) {
-           counter = counter + 1;
-           logger.info("Reducer Text: counter is " + counter);
-           logger.info("Reducer Text: Add this item  " + new WordAndCount(key, value).toString());
-
-           pq.add(new WordAndCount(new Text(key), new IntWritable(value.get()) ) );
-
-           logger.info("Reducer Text: " + key.toString() + " , Count: " + value.toString());
-           logger.info("PQ Status: " + pq.toString());
-       }
-
-       // keep the priorityQueue size <= heapSize
-       while (pq.size() > 10) {
-           pq.poll();
-       }
-
-
-   }
-
+       // key only has one distinct value o values has size of 1
+       // task 2 code
+       for (DoubleWritable value : values) {
+        pq.add(new WordAndCount(new Text(key), new DoubleWritable(value.get())));
+        if (pq.size() > 3) {
+            pq.poll();
+        }
+        }
+        // task 1 code
+        // keep the priorityQueue size <= heapSize
+        //    while (pq.size() > 3) { //changed 10 to 3 for task 1
+        //        pq.poll();
+        //    }
+    }
 
     public void cleanup(Context context) throws IOException, InterruptedException {
         logger.info("TopKReducer cleanup cleanup.");
@@ -80,7 +74,7 @@ public class TopKReducer extends  Reducer<Text, IntWritable, Text, IntWritable> 
         logger.info(values.toString());
 
 
-        // reverse so they are ordered in descending order
+        // descending order
         Collections.reverse(values);
 
 
@@ -88,8 +82,6 @@ public class TopKReducer extends  Reducer<Text, IntWritable, Text, IntWritable> 
             context.write(value.getWord(), value.getCount());
             logger.info("TopKReducer - Top-10 Words are:  " + value.getWord() + "  Count:"+ value.getCount());
         }
-
-
     }
 
 }
